@@ -1,44 +1,38 @@
-// =======================
-// stops.js — טעינת תחנות מקובץ iCloud
-// =======================
+(async () => {
 
-// טוען stops.json מה־iCloud בדיוק כפי שהיה בקוד שלך
+  const fm = FileManager.iCloud();
+  const stopsFile = fm.joinPath(fm.documentsDirectory(), "stops.json");
+  await fm.downloadFileFromiCloud(stopsFile);
+  const stopsDataRaw = fm.readString(stopsFile);
 
-const fm = FileManager.iCloud();
-const stopsFile = fm.joinPath(fm.documentsDirectory(), "stops.json");
-await fm.downloadFileFromiCloud(stopsFile);
-const stopsDataRaw = fm.readString(stopsFile);
+  let stopsData;
+  try {
+    stopsData = JSON.parse(stopsDataRaw);
+  } catch (e) {
+    const a = new Alert();
+    a.title = "שגיאה בטעינת stops.json";
+    a.message = String(e);
+    await a.present();
+    throw e;
+  }
 
-let stopsData;
-try {
-  stopsData = JSON.parse(stopsDataRaw);
-} catch (e) {
-  const a = new Alert();
-  a.title = "שגיאה בטעינת stops.json";
-  a.message = String(e);
-  await a.present();
-  throw e; // חשוב לזרוק כדי שהסקריפט הראשי ידע שקרתה שגיאה
-}
+  globalThis.stopsArray = Array.isArray(stopsData)
+    ? stopsData
+    : Array.isArray(stopsData.stops)
+    ? stopsData.stops
+    : [];
 
-// =======================
-// הכנת המפות (כמו בקוד המקורי שלך)
-// =======================
+  globalThis.stopsById = new Map();
+  globalThis.stopsByCode = new Map();
 
-globalThis.stopsArray = Array.isArray(stopsData)
-  ? stopsData
-  : Array.isArray(stopsData.stops)
-  ? stopsData.stops
-  : [];
+  for (const s of stopsArray) {
+    if (!s) continue;
 
-globalThis.stopsById = new Map();
-globalThis.stopsByCode = new Map();
+    const id = String(s.stopId ?? "");
+    const code = String(s.stopCode ?? "");
 
-for (const s of stopsArray) {
-  if (!s) continue;
+    if (id) stopsById.set(id, s);
+    if (code) stopsByCode.set(code, s);
+  }
 
-  const id = String(s.stopId ?? "");
-  const code = String(s.stopCode ?? "");
-
-  if (id) stopsById.set(id, s);
-  if (code) stopsByCode.set(code, s);
-}
+})(); // סוף ה־IIFE
