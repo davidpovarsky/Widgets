@@ -4,7 +4,7 @@
 
 globalThis.buildHTML = async function () {
   const url =
-    "https://raw.githubusercontent.com/davidpovarsky/Scriptable/main/webview.html";
+    ""https://raw.githubusercontent.com/davidpovarsky/Scriptable/main/WEBVIEW.HTML"webview.html";
 
   const req = new Request(url);
   req.timeoutInterval = 20;
