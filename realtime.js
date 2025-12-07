@@ -1,16 +1,16 @@
 // =======================
 // realtime.js — לוגיקת זמן־אמת 1:1 מהקוד שלך
+// (ללא שום top-level await)
 // =======================
 
-// הפונקציה הראשית שמביאה realtime אחת
+// הפונקציה הראשית שמביאה snapshot אחד
 globalThis.pushRealtimeOnce = async function (wv) {
   try {
     const allPayloads = [];
 
     for (const r of routesStatic) {
-      const realtimeUrl = `${API_BASE}/realtime?routeCode=${encodeURIComponent(
-        r.routeCode
-      )}`;
+      const realtimeUrl =
+        `${API_BASE}/realtime?routeCode=${encodeURIComponent(r.routeCode)}`;
 
       const realtimeData = await fetchJson(realtimeUrl);
 
@@ -18,7 +18,7 @@ globalThis.pushRealtimeOnce = async function (wv) {
         ? realtimeData.vehicles
         : [];
 
-      // סינון לוגי 1:1 מהקוד שלך
+      // סינון ע"פ routeDescExact / Prefix — 1:1
       const vehiclesFiltered = vehiclesRaw.filter((v) => {
         const gtfs = v.trip?.gtfsInfo || {};
         const rd = gtfs.routeDesc || "";
@@ -69,20 +69,21 @@ globalThis.pushRealtimeOnce = async function (wv) {
 
     const js = `window.updateData(${JSON.stringify(allPayloads)});`;
     await wv.evaluateJavaScript(js, false);
+
   } catch (e) {
-    console.error("Realtime error: " + e);
+    console.error("Realtime error:", e);
   }
 };
 
 // =======================
-// לולאת הרענון — מוצאת החוצה אחד־לאחד מהקוד שלך
+// לולאת הריענון (ללא top-level await)
 // =======================
 
 globalThis.startRealtimeLoop = function (wv) {
   let keepRefreshing = true;
 
-  // פונקציה אסינכרונית — 1:1
-  async function refreshLoop() {
+  async function loop() {
+    // snapshot ראשון
     await pushRealtimeOnce(wv);
 
     while (keepRefreshing) {
@@ -92,10 +93,9 @@ globalThis.startRealtimeLoop = function (wv) {
     }
   }
 
-  // מפעילים את הלולאה
-  refreshLoop();
+  loop(); // מפעילים לולאה אסינכרונית
 
-  // כשסוגרים את ה־WebView — מפסיקים לולאה
+  // לעצור כאשר WebView נסגר
   wv.waitForClose().then(() => {
     keepRefreshing = false;
   });
