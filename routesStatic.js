@@ -1,9 +1,12 @@
 (async () => {
 
   globalThis.API_BASE = "https://kavnav.com/api";
+
+  // הוספה קריטית — למנוע SyntaxError
+  globalThis.ROUTE_DATE_OVERRIDE = null;
+
   globalThis.routeDate = ROUTE_DATE_OVERRIDE || isoDateTodayLocal();
   globalThis.routesStatic = [];
-
   globalThis.fetchShapeIdAndCoordsForRoute = async function (routeInfo) {
     try {
       if (!routeInfo.shapeId || typeof routeInfo.shapeId !== "string") {
